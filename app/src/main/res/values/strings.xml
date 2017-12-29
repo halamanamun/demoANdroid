@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Demo</string>
+    <string name="px_consumer_key">tgpsMXi1u2LI5DcrHeaVWI091G7qF2xrWoNf7Keu</string>
+    <string name="px_consumer_secret">oi410XMAXW3GibYpV1rtDXhnQCiHnH7nwGiKObhu</string>
+    <string name="px_username">testonebig</string>
+    <string name="px_pass">tan217774</string>
+    <string name="image_description">Content Desciption</string>
+
+</resources>
