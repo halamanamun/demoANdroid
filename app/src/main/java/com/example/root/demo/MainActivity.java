@@ -3,6 +3,8 @@ package com.example.root.demo;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.widget.LinearLayoutManager;
@@ -10,11 +12,11 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.example.root.demo.listener.ItemListener;
 import com.example.root.demo.listener.OnLoadMoreListener;
@@ -24,6 +26,9 @@ import com.fivehundredpx.api.FiveHundredException;
 import com.fivehundredpx.api.auth.AccessToken;
 import com.fivehundredpx.api.tasks.XAuth500pxTask;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -35,6 +40,12 @@ public class MainActivity extends Activity implements XAuth500pxTask.Delegate, L
     private List<Photo> photos = new ArrayList<>();
     public UserAdapter mUserAdapter;
     protected ItemListener mListener;
+    private final ItemListener mItemListener = new ItemListener() {
+        @Override
+        public void onItemClick(Photo photo, int position) {
+            Toast.makeText(Application.getContext(), photo.getName(), Toast.LENGTH_LONG).show();
+        }
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -65,8 +76,6 @@ public class MainActivity extends Activity implements XAuth500pxTask.Delegate, L
         loadPhotoTask.execute(result);
     }
 
-
-
     @Override
     public void onFail(FiveHundredException e) {
         Log.w(TAG, "success "+ e.getMessage());
@@ -81,12 +90,10 @@ public class MainActivity extends Activity implements XAuth500pxTask.Delegate, L
         mToolbar.setTitle("LoadMoreRecycleView");
         mRecyclerView = (RecyclerView) findViewById(R.id.recycleView);
 
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mUserAdapter = new UserAdapter();
-        mRecyclerView.setAdapter(mUserAdapter);
-
         AutoFitGridLayoutManager layoutManager = new AutoFitGridLayoutManager(this, 500);
         mRecyclerView.setLayoutManager(layoutManager);
+        mUserAdapter = new UserAdapter();
+        mRecyclerView.setAdapter(mUserAdapter);
 
         mUserAdapter.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
@@ -156,7 +163,6 @@ public class MainActivity extends Activity implements XAuth500pxTask.Delegate, L
         private final int VIEW_TYPE_LOADING = 1;
 
         private OnLoadMoreListener mOnLoadMoreListener;
-        private ItemListener mItemListener;
 
         private boolean isLoading;
         private int visibleThreshold = 5;
@@ -168,9 +174,11 @@ public class MainActivity extends Activity implements XAuth500pxTask.Delegate, L
                 @Override
                 public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                     super.onScrolled(recyclerView, dx, dy);
-
+                    final RecyclerView.Adapter a = mRecyclerView != null ? mRecyclerView.getAdapter() : null;
                     totalItemCount = linearLayoutManager.getItemCount();
                     lastVisibleItem = linearLayoutManager.findLastVisibleItemPosition();
+
+                    Log.e(TAG, "LinearLayoutManager " + totalItemCount);
 
                     if (!isLoading && totalItemCount <= (lastVisibleItem + visibleThreshold)) {
                         if (mOnLoadMoreListener != null) {
@@ -205,11 +213,17 @@ public class MainActivity extends Activity implements XAuth500pxTask.Delegate, L
         }
 
         @Override
-        public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
             if (holder instanceof UserViewHolder) {
-                Photo user = photos.get(position);
+                final Photo user = photos.get(position);
                 UserViewHolder userViewHolder = (UserViewHolder) holder;
                 userViewHolder.ivPhoto.setImageBitmap(user.getPhotoBmp());
+                userViewHolder.ivPhoto.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        mItemListener.onItemClick(user, position);
+                    }
+                });
 
             } else if (holder instanceof LoadingViewHolder) {
                 LoadingViewHolder loadingViewHolder = (LoadingViewHolder) holder;
